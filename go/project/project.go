@@ -5,74 +5,70 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 type Project struct {
 	// The name of the project type.
 	Name string
-	// The name of the file that indicates that the current directory is a project.
-	// It identifies the project root.
-	Identifiers []string
-	// The name of the directories that should be deleted.
-	// These have to be subdirectories of the project root.
+
+	Configurations []ProjectConfiguration
+}
+
+type ProjectConfiguration struct {
+	Identifiers       []Identifier
 	TargetDirectories []string
 }
 
-func (p *Project) pathIsIdentifier(identifierPath string) bool {
-	for _, identifier := range p.Identifiers {
-		if identifierPathStat, err := os.Stat(identifierPath); err == nil {
-			if !identifierPathStat.IsDir() && filepath.Base(identifierPath) == identifier {
-				return true
-			}
-		}
+type IdentifierType string
+
+const (
+	IdentifierTypeFileName               IdentifierType = "file"
+	IdentifierTypeFileExtension          IdentifierType = "extension"
+	IdentifierTypeFileNameInDir          IdentifierType = "fileInDir"
+	IdentifierTypeExtensionInSpecificDir IdentifierType = "extensionInDir"
+)
+
+// Identifies the project root
+type Identifier struct {
+	identifierType      IdentifierType
+	name                string
+	extension           string
+	parentDirectory     string
+	relationToTargetDir string
+}
+
+func (i *Identifier) IsIdentifier(identifierPath string) bool {
+	identifierStat, identifierStatErr := os.Stat(identifierPath)
+
+	if identifierStatErr != nil {
+		return false
+	}
+
+	fileBase := filepath.Base(identifierPath)
+	fileExt := filepath.Ext(identifierPath)
+	fileName := strings.TrimSuffix(fileBase, fileExt)
+	parentDir := filepath.Base(filepath.Dir(identifierPath))
+
+	nameIsEqual := fileName == i.name
+	extensionIsEqual := fileExt == i.extension
+	parentDirIsEqual := parentDir == i.parentDirectory
+
+	isFile := !identifierStat.IsDir()
+
+	switch i.identifierType {
+	case IdentifierTypeFileName:
+		return isFile && nameIsEqual && extensionIsEqual
+	case IdentifierTypeFileExtension:
+		return isFile && extensionIsEqual
+	case IdentifierTypeFileNameInDir:
+		return isFile && nameIsEqual && extensionIsEqual && parentDirIsEqual
+	case IdentifierTypeExtensionInSpecificDir:
+		return isFile && extensionIsEqual && parentDirIsEqual
 	}
 
 	return false
 }
 
-func (p *Project) pathIsTargetDirectory(targetPath string) bool {
-	for _, target := range p.TargetDirectories {
-		if targetPathStat, err := os.Stat(targetPath); err == nil {
-			if targetPathStat.IsDir() && filepath.Base(targetPath) == target {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-func (p *Project) Clean(identifierPath string, dryRun bool) error {
-	if p.pathIsIdentifier(identifierPath) {
-		currentDir := filepath.Dir(identifierPath)
-		for _, target := range p.TargetDirectories {
-			possibleTargetDir := filepath.Join(currentDir, target)
-
-			if p.pathIsTargetDirectory(possibleTargetDir) {
-				if dryRun {
-					fmt.Printf("Deleting %s in %s \n", target, possibleTargetDir)
-				} else {
-					os.RemoveAll(possibleTargetDir)
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func (p *Project) TargetDirectoryIsDirectChild(targetPath string) bool {
-	if p.pathIsTargetDirectory(targetPath) {
-		for _, identifier := range p.Identifiers {
-			// If the parent directory contains an identifier, it's a target directory.
-			// Skip it for performance.
-			currentDir := path.Dir(targetPath)
-			possibleIdentifierPath := path.Join(currentDir, identifier)
-			if _, err := os.Stat(possibleIdentifierPath); err == nil {
-				return true
-			}
-		}
-	}
-
-	return false
-}
+// TODO: project can have multiple project configurations
+// These have relative paths to the target folders
