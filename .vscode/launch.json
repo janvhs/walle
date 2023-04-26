@@ -1,0 +1,45 @@
+{
+    // Verwendet IntelliSense zum Ermitteln möglicher Attribute.
+    // Zeigen Sie auf vorhandene Attribute, um die zugehörigen Beschreibungen anzuzeigen.
+    // Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'walle'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=walle",
+                    "--package=walle"
+                ],
+                "filter": {
+                    "name": "walle",
+                    "kind": "bin"
+                }
+            },
+            "args": ["/Users/janfooken/Documents/GitHub/Dustman"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'walle'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=walle",
+                    "--package=walle"
+                ],
+                "filter": {
+                    "name": "walle",
+                    "kind": "bin"
+                }
+            },
+            "args": ["/Users/janfooken/Documents/GitHub/Dustman"],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
