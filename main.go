@@ -92,37 +92,30 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// Make a map with target and project
-	targetDirs := make([]string, 0)
+	targetChan := make(chan string)
+	go scanDirs(flagRootPath, projects, targetChan)
 
-	filepath.WalkDir(flagRootPath, func(path string, d fs.DirEntry, err error) error {
-		for _, knownTargetDir := range targetDirs {
-			if isInDir(path, knownTargetDir) {
-				return filepath.SkipDir
-			}
-		}
-		for _, project := range projects {
-			for _, config := range project.Configurations {
-				if config.MatchesOptimistically(path) {
-					targetDirs = append(targetDirs, config.GenerateTargetList(path)...)
-				}
-			}
-		}
+	rl, err := readline.New("")
+	if err != nil {
+		log.Fatalln(err)
+	}
 
-		return nil
-	})
+	defer rl.Close()
 
-	for _, target := range targetDirs {
-		rl, err := readline.New(fmt.Sprintf("Delete %s ? [y/N] ", target))
-		if err != nil {
-			continue
-		}
+	for target := range targetChan {
+		rl.SetPrompt(fmt.Sprintf("Delete %s ? [y/N] ", target))
+
 		line, err := rl.Readline()
 		if err != nil {
-			continue
+			if err == readline.ErrInterrupt {
+				break
+			} else {
+				continue
+			}
 		}
 
 		result := strings.ToUpper(line)
+		result = strings.TrimSpace(result)
 		if result == "Y" {
 			if flagDry {
 				fmt.Printf("Deleting %s ...\n", target)
@@ -131,6 +124,37 @@ func main() {
 			}
 		}
 	}
+}
+
+func scanDirs(rootPath string, projects []Project, targets chan string) {
+	defer close(targets)
+
+	// Make a map with target and project
+	targetDirs := make([]string, 0)
+
+	filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+		for _, knownTargetDir := range targetDirs {
+			if isInDir(path, knownTargetDir) {
+				return filepath.SkipDir
+			}
+		}
+
+		for _, project := range projects {
+			for _, config := range project.Configurations {
+				if config.MatchesOptimistically(path) {
+					newTargets := config.GenerateTargetList(path)
+
+					for _, target := range newTargets {
+						targets <- target
+					}
+
+					targetDirs = append(targetDirs, newTargets...)
+				}
+			}
+		}
+
+		return nil
+	})
 }
 
 func isInDir(path, dir string) bool {
