@@ -37,6 +37,14 @@ func main() {
 						"node_modules",
 					},
 				},
+				{
+					Identifier: &FileNameIdentifier{
+						Name: "pnpmrc",
+					},
+					RelativeTargets: []string{
+						"node_modules",
+					},
+				},
 			},
 		},
 		{
@@ -75,6 +83,24 @@ func main() {
 					RelativeTargets: []string{
 						"target",
 					},
+				},
+			},
+		},
+		{
+			Name: "Python",
+			Configurations: []Configuration{
+				{
+					Identifier: &FileExtensionInDirectoryIdentifier{
+						Directory: "__pycache__",
+						Extension: ".pyc",
+					},
+					RelativeTargets: []string{"__pycache__"},
+				},
+				{
+					Identifier: &FileNameIdentifier{
+						Name: "pyvenv.cfg",
+					},
+					RelativeTargets: []string{""},
 				},
 			},
 		},
@@ -129,7 +155,6 @@ func main() {
 func scanDirs(rootPath string, projects []Project, targets chan string) {
 	defer close(targets)
 
-	// Make a map with target and project
 	targetDirs := make([]string, 0)
 
 	filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
@@ -158,10 +183,9 @@ func scanDirs(rootPath string, projects []Project, targets chan string) {
 }
 
 func isInDir(path, dir string) bool {
-	// TODO: Move to filepath.SplitList
-	pathList := strings.Split(path, "/")
+	pathList := strings.Split(path, string(os.PathSeparator))
 	pathListLen := len(pathList)
-	dirList := strings.Split(dir, "/")
+	dirList := strings.Split(dir, string(os.PathSeparator))
 
 	if pathListLen < len(dirList) {
 		return false
