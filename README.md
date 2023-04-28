@@ -1,2 +1,92 @@
-# walle
-Keep your computer clean with this little helper 🤖
+# walle aka WALL·E
+
+Keep your computer tidy with this little helper 🤖
+
+```sh
+walle -root ~/Projects
+```
+
+## What can *walle* do for me?
+
+*walle* crawls your hard drive and looks for directories that
+contain build artefacts like rust's *target* directory or
+npm's *node_modules* directory.
+
+These are usually very large and contain files that are only used
+during development and can therefore be safely deleted.
+
+## How do I install *walle*?
+
+These instructions work for Linux and Mac.
+
+> **Note**
+> Please make sure `~/.local/bin` is on your `$PATH`.
+
+> **Warning**
+> On Windows, adapt these to fit your needs.
+
+### Via [just](https://just.systems)
+
+```sh
+git clone https://github.com/bode-fun/walle.git
+cd walle
+just install
+```
+
+### Manual
+
+```sh
+git clone https://github.com/bode-fun/walle.git
+cd walle
+go build .
+mv walle ~/.local/bin/
+```
+
+## Which programming languages are currently supported?
+
+The languages *walle* currently supports, are listed below.
+
+However, adding a new Language is as easy as adding a configuration
+in [main.go](main.go)
+
+> **Note**
+> If your language is missing, please add it in a pull request
+instead of opening an issue.
+
+- JavaScript
+    - npm
+- Python
+    - Virtual environments aka venv
+    - \_\_pycache\_\_
+- Rust
+    - Cargo
+- php
+    - Composer
+- Swift
+    - Swift Package Manager
+
+## TODOs
+
+For a list of open TODOs, please take look at the issue tracker ✌️
+
+Please contribute, if you have any ideas for cool features or
+just want to improve something.
+
+
+## One more thing
+
+Software is more than just bytes and bits. It should be elegant,
+easy to read, correct, maintainable and working on it
+should teach you something.
+
+One can only truly fulfil this goal, if one truly thinks about,
+understands and knows about the source code one writes.
+
+In my opinion, this is only possible when writing the source code
+yourself, paraphrasing source code from external sources or,
+to some extend, generating source code via a compiler.
+
+Therefore, this software if **100%** handmade.
+
+Build with 🫶 and 💅 by [Jan Fooken](https://github.com/bode-fun) and
+licensed under [GPLv3](LICENSE)
