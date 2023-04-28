@@ -1,7 +1,5 @@
 package main
 
-// TODO: Move to old GitHub repo because this is gooood!
-
 import (
 	"flag"
 	"fmt"
@@ -100,6 +98,7 @@ func main() {
 					Identifier: &FileNameIdentifier{
 						Name: "pyvenv.cfg",
 					},
+					// "" is the directory where the file was found in
 					RelativeTargets: []string{""},
 				},
 			},
@@ -117,6 +116,8 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	// TODO: When flagRootPath is not a subpath of the user's homedir or equals the homedir, print a warning
 
 	targetChan := make(chan string)
 	go scanDirs(flagRootPath, projects, targetChan)
@@ -143,9 +144,8 @@ func main() {
 		result := strings.ToUpper(line)
 		result = strings.TrimSpace(result)
 		if result == "Y" {
-			if flagDry {
-				fmt.Printf("Deleting %s ...\n", target)
-			} else {
+			fmt.Printf("Deleting %s ...\n", target)
+			if !flagDry {
 				os.RemoveAll(target)
 			}
 		}
@@ -155,34 +155,36 @@ func main() {
 func scanDirs(rootPath string, projects []Project, targets chan string) {
 	defer close(targets)
 
-	targetDirs := make([]string, 0)
+	knownTargetDirs := make(map[string]interface{}, 0)
 
 	filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
-		for _, knownTargetDir := range targetDirs {
-			if isInDir(path, knownTargetDir) {
+		for knownTargetDir := range knownTargetDirs {
+			if isPathInDir(path, knownTargetDir) {
 				return filepath.SkipDir
 			}
 		}
 
+		newTargets := make(map[string]interface{}, 0)
 		for _, project := range projects {
 			for _, config := range project.Configurations {
 				if config.MatchesOptimistically(path) {
-					newTargets := config.GenerateTargetList(path)
-
-					for _, target := range newTargets {
-						targets <- target
+					for _, target := range config.GenerateTargetList(path) {
+						newTargets[target] = nil
 					}
-
-					targetDirs = append(targetDirs, newTargets...)
 				}
 			}
+		}
+
+		for target := range newTargets {
+			targets <- target
+			knownTargetDirs[target] = nil
 		}
 
 		return nil
 	})
 }
 
-func isInDir(path, dir string) bool {
+func isPathInDir(path, dir string) bool {
 	pathList := strings.Split(path, string(os.PathSeparator))
 	pathListLen := len(pathList)
 	dirList := strings.Split(dir, string(os.PathSeparator))
