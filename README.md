@@ -8,8 +8,8 @@ walle -root ~/Projects
 
 ## What can *walle* do for me?
 
-*walle* crawls your hard drive and looks for directories that
-contain build artefacts like rust's *target* directory or
+*walle* can crawl your hard drive and look for directories that
+contain build artefacts, such as rust's *target* directory or
 npm's *node_modules* directory.
 
 These are usually very large and contain files that are only used
@@ -17,13 +17,13 @@ during development and can therefore be safely deleted.
 
 ## How do I install *walle*?
 
-These instructions work for Linux and Mac.
+These instructions are for Linux and Mac.
 
 > **Note**
-> Please make sure `~/.local/bin` is on your `$PATH`.
+> Please make sure that `~/.local/bin` is on your `$PATH`.
 
 > **Warning**
-> On Windows, adapt these to fit your needs.
+> On Windows, adjust these to suit your needs.
 
 ### Via [just](https://just.systems)
 
@@ -44,7 +44,7 @@ mv walle ~/.local/bin/
 
 ## Which programming languages are currently supported?
 
-The languages *walle* currently supports, are listed below.
+The languages currently supported by *walle* are listed below.
 
 However, adding a new Language is as easy as adding a configuration
 in [main.go](main.go)
@@ -67,7 +67,7 @@ instead of opening an issue.
 
 ## TODOs
 
-For a list of open TODOs, please take look at the issue tracker ✌️
+For a list of open TODOs, please take  a look at the issue tracker ✌️
 
 Please contribute, if you have any ideas for cool features or
 just want to improve something.
@@ -75,18 +75,18 @@ just want to improve something.
 
 ## One more thing
 
-Software is more than just bytes and bits. It should be elegant,
+Software is more than just bits and bytes. It should be elegant,
 easy to read, correct, maintainable and working on it
 should teach you something.
 
 One can only truly fulfil this goal, if one truly thinks about,
 understands and knows about the source code one writes.
 
-In my opinion, this is only possible when writing the source code
+In my opinion, this is only possible by writing the source code
 yourself, paraphrasing source code from external sources or,
-to some extend, generating source code via a compiler.
+to some extent, generating source code via a compiler.
 
-Therefore, this software if **100%** handmade.
+Therefore, this software is **100%** handmade.
 
-Build with 🫶 and 💅 by [Jan Fooken](https://github.com/bode-fun) and
-licensed under [GPLv3](LICENSE)
+Built with 🫶 and 💅 by [Jan Fooken](https://github.com/bode-fun).
+Licensed under [GPLv3](LICENSE)
