@@ -119,7 +119,7 @@ func main() {
 
 	// TODO: When flagRootPath is not a subpath of the user's homedir or equals the homedir, print a warning
 
-	targetChan := make(chan string)
+	targetChan := make(chan MatchInfo)
 	go scanDirs(flagRootPath, projects, targetChan)
 
 	rl, err := readline.New("")
@@ -130,9 +130,16 @@ func main() {
 	defer rl.Close()
 
 	for target := range targetChan {
-		rl.SetPrompt(fmt.Sprintf("Delete %s ? [y/N] ", target))
+		fmt.Printf("Found a %s project with the following directories:\n", target.ProgrammingLanguage)
+
+		for dir, size := range target.TargetDirs {
+			fmt.Printf("  %s, %.3fMiB\n", dir, size)
+		}
+
+		rl.SetPrompt(fmt.Sprintf("Do you want to delete these directories? [y/N] "))
 
 		line, err := rl.Readline()
+
 		if err != nil {
 			if err == readline.ErrInterrupt {
 				break
@@ -144,16 +151,23 @@ func main() {
 		result := strings.ToUpper(line)
 		result = strings.TrimSpace(result)
 		if result == "Y" {
-			fmt.Printf("Deleting %s ...\n", target)
-			if !flagDry {
-				os.RemoveAll(target)
+			for dir := range target.TargetDirs {
+				fmt.Printf("Deleting %s ...\n", dir)
+				if !flagDry {
+					os.RemoveAll(dir)
+				}
 			}
 		}
 	}
 }
 
-func scanDirs(rootPath string, projects []Project, targets chan string) {
-	defer close(targets)
+type MatchInfo struct {
+	ProgrammingLanguage string
+	TargetDirs          map[string]float64
+}
+
+func scanDirs(rootPath string, projects []Project, targetChannel chan MatchInfo) {
+	defer close(targetChannel)
 
 	knownTargetDirs := make(map[string]interface{}, 0)
 
@@ -164,24 +178,57 @@ func scanDirs(rootPath string, projects []Project, targets chan string) {
 			}
 		}
 
-		newTargets := make(map[string]interface{}, 0)
+		newTargetsWithLanguage := make(map[string]string, 0)
 		for _, project := range projects {
 			for _, config := range project.Configurations {
 				if config.MatchesOptimistically(path) {
 					for _, target := range config.GenerateTargetList(path) {
-						newTargets[target] = nil
+						newTargetsWithLanguage[target] = project.Name
 					}
 				}
 			}
 		}
 
-		for target := range newTargets {
-			targets <- target
+		languageWithTargets := make(map[string][]string, 0)
+
+		for target, lang := range newTargetsWithLanguage {
+			languageWithTargets[lang] = append(languageWithTargets[lang], target)
 			knownTargetDirs[target] = nil
+		}
+
+		for lang, targets := range languageWithTargets {
+			matchInfo := MatchInfo{
+				ProgrammingLanguage: lang,
+				TargetDirs:          make(map[string]float64, 0),
+			}
+
+			for _, target := range targets {
+				size, _ := calculateDirectorySize(target)
+				matchInfo.TargetDirs[target] = size
+			}
+
+			targetChannel <- matchInfo
 		}
 
 		return nil
 	})
+}
+
+func calculateDirectorySize(dirRoot string) (float64, error) {
+	var size int64
+	err := filepath.Walk(dirRoot, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			size += info.Size()
+		}
+		return err
+	})
+
+	sizeInMiB := float64(size) / 1024 / 1024
+
+	return sizeInMiB, err
 }
 
 func isPathInDir(path, dir string) bool {
