@@ -16,6 +16,7 @@ type FileExtensionInDirectoryIdentifier struct {
 }
 
 func (i *FileExtensionInDirectoryIdentifier) Matches(potentialPath string) bool {
+	potentialPath = filepath.Clean(potentialPath)
 	stat, err := os.Stat(potentialPath)
 	if err != nil {
 		return false
@@ -41,7 +42,6 @@ func (i *FileExtensionInDirectoryIdentifier) Matches(potentialPath string) bool 
 
 func (i *FileExtensionInDirectoryIdentifier) MatchesOptimistically(potentialRoot string) bool {
 	potentialPath := filepath.Join(potentialRoot, i.Directory)
-	potentialPath = filepath.Clean(potentialPath)
 	return i.Matches(potentialPath)
 }
 
@@ -51,6 +51,7 @@ type FileNameInDirectoryIdentifier struct {
 }
 
 func (i *FileNameInDirectoryIdentifier) Matches(potentialPath string) bool {
+	potentialPath = filepath.Clean(potentialPath)
 	dirName := filepath.Dir(potentialPath)
 	fileName := filepath.Base(potentialPath)
 
@@ -64,8 +65,6 @@ func (i *FileNameInDirectoryIdentifier) Matches(potentialPath string) bool {
 
 func (i *FileNameInDirectoryIdentifier) MatchesOptimistically(potentialRoot string) bool {
 	potentialPath := filepath.Join(potentialRoot, i.Directory, i.Name)
-	potentialPath = filepath.Clean(potentialPath)
-
 	return i.Matches(potentialPath)
 }
 
@@ -74,6 +73,7 @@ type FileNameIdentifier struct {
 }
 
 func (i *FileNameIdentifier) Matches(potentialPath string) bool {
+	potentialPath = filepath.Clean(potentialPath)
 	fileName := filepath.Base(potentialPath)
 	stat, err := os.Stat(potentialPath)
 	if err != nil {
