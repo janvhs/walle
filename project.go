@@ -20,13 +20,11 @@ func (p *Project) Clean(absolutePath string) {
 	}
 }
 
-// TODO: Do I need generics?
 type Configuration struct {
 	Identifier      Identifier
 	RelativeTargets []string
 }
 
-// TODO: This should return a list of matched targets as well
 func (c *Configuration) MatchesOptimistically(absolutePath string) bool {
 	return c.Identifier.MatchesOptimistically(absolutePath)
 }
@@ -43,7 +41,6 @@ func (c *Configuration) GenerateTargetList(absolutePath string) []string {
 	return targets
 }
 
-// TODO: This should return a list of matched targets as well
 func (c *Configuration) Matches(absolutePath string) bool {
 	return c.Identifier.Matches(absolutePath)
 }
