@@ -10,11 +10,36 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/chzyer/readline"
 )
 
 var flagRootPath string
 var flagDry bool
+
+var messageStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color(""))
+
+var scanningStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("8"))
+
+var langtyle = lipgloss.NewStyle().
+	Bold(true).
+	Foreground(lipgloss.Color("2"))
+
+var dirListStyle = lipgloss.NewStyle().
+	PaddingLeft(2).
+	Foreground(lipgloss.Color("6"))
+
+var destructiveQuestion = lipgloss.NewStyle().
+	Bold(true).
+	Foreground(lipgloss.Color("5"))
+
+var strongWarningStyle = lipgloss.NewStyle().
+	Bold(true).
+	Foreground(lipgloss.Color("1"))
+
+var errorStyle = strongWarningStyle
 
 func init() {
 	flag.StringVar(&flagRootPath, "root", "", "The root where to search from")
@@ -34,7 +59,7 @@ func main() {
 	flagRootPath, err = handleRootPath(flagRootPath)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(errorStyle.Render(err.Error()))
 	}
 
 	projects := []Project{
@@ -124,19 +149,19 @@ func main() {
 
 	rl, err := readline.New("")
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln(errorStyle.Render(err.Error()))
 	}
 
 	defer rl.Close()
 
 	for target := range targetChan {
-		fmt.Printf("Found a %s project with the following directories:\n", target.ProgrammingLanguage)
+		fmt.Println(messageStyle.Render(fmt.Sprintf("Found a %s project with the following directories:", langtyle.Render(target.ProgrammingLanguage))))
 
 		for dir, size := range target.TargetDirs {
-			fmt.Printf("  %s, %.3f MiB\n", dir, size)
+			fmt.Printf(dirListStyle.Render(fmt.Sprintf("- %s, %.3f MiB\n", dir, size)))
 		}
 
-		rl.SetPrompt(fmt.Sprintf("Do you want to delete these directories? [y/N] "))
+		rl.SetPrompt(destructiveQuestion.Render("Do you want to delete these directories? [y/N] "))
 
 		line, err := rl.Readline()
 
@@ -152,18 +177,20 @@ func main() {
 		result = strings.TrimSpace(result)
 		if result == "Y" {
 			for dir := range target.TargetDirs {
-				fmt.Printf("Deleting %s ...\n", dir)
+				fmt.Println(strongWarningStyle.Render(fmt.Sprintf("Deleting %s", dir)))
 				if !flagDry {
 					os.RemoveAll(dir)
 				}
 			}
 		}
+		fmt.Println()
+
 	}
 }
 
 func handleRootPath(rootPath string) (string, error) {
 	if rootPath == "" {
-		return "", errors.New("Root can not be empty")
+		return "", errors.New("Root path can not be empty")
 	}
 
 	rootPath = filepath.Clean(rootPath)
