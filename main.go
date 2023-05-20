@@ -23,7 +23,7 @@ var messageStyle = lipgloss.NewStyle().
 var scanningStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color("8"))
 
-var langtyle = lipgloss.NewStyle().
+var langStyle = lipgloss.NewStyle().
 	Bold(true).
 	Foreground(lipgloss.Color("2"))
 
@@ -169,7 +169,7 @@ func handleTarget(target MatchInfo) error {
 
 	defer rl.Close()
 
-	fmt.Println(messageStyle.Render(fmt.Sprintf("Found a %s project with the following directories:", langtyle.Render(target.ProgrammingLanguage))))
+	fmt.Println(messageStyle.Render(fmt.Sprintf("Found a %s project with the following directories:", langStyle.Render(target.ProgrammingLanguage))))
 
 	for dir, size := range target.TargetDirs {
 		fmt.Println(dirListStyle.Render(fmt.Sprintf("- %s, %.3f MiB", dir, size)))
