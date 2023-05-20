@@ -147,7 +147,10 @@ func main() {
 	targetChan := make(chan MatchInfo)
 	go scanDirs(flagRootPath, projects, targetChan)
 
+	fmt.Println(scanningStyle.Render("Scanning..."))
+
 	for target := range targetChan {
+		lipgloss.DefaultRenderer().Output().ClearLines(1)
 		err := handleTarget(target)
 		if err != nil {
 			if err == readline.ErrInterrupt {
@@ -156,7 +159,11 @@ func main() {
 				continue
 			}
 		}
+
+		fmt.Println()
+		fmt.Println(scanningStyle.Render("Scanning..."))
 	}
+	lipgloss.DefaultRenderer().Output().ClearLines(1)
 }
 
 // TODO: Replace readline with stdio
@@ -190,8 +197,6 @@ func handleTarget(target MatchInfo) error {
 			}
 		}
 	}
-
-	fmt.Println()
 	return nil
 }
 
