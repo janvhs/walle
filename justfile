@@ -1,5 +1,10 @@
+export CGO_ENABLED := "0"
+
 build:
     go build .
+
+env:
+    go env
 
 install:
     @just build
