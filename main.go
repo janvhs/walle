@@ -147,24 +147,8 @@ func main() {
 	targetChan := make(chan MatchInfo)
 	go scanDirs(flagRootPath, projects, targetChan)
 
-	rl, err := readline.New("")
-	if err != nil {
-		log.Fatalln(errorStyle.Render(err.Error()))
-	}
-
-	defer rl.Close()
-
 	for target := range targetChan {
-		fmt.Println(messageStyle.Render(fmt.Sprintf("Found a %s project with the following directories:", langtyle.Render(target.ProgrammingLanguage))))
-
-		for dir, size := range target.TargetDirs {
-			fmt.Printf(dirListStyle.Render(fmt.Sprintf("- %s, %.3f MiB\n", dir, size)))
-		}
-
-		rl.SetPrompt(destructiveQuestion.Render("Do you want to delete these directories? [y/N] "))
-
-		line, err := rl.Readline()
-
+		err := handleTarget(target)
 		if err != nil {
 			if err == readline.ErrInterrupt {
 				break
@@ -172,25 +156,48 @@ func main() {
 				continue
 			}
 		}
+	}
+}
 
-		result := strings.ToUpper(line)
-		result = strings.TrimSpace(result)
-		if result == "Y" {
-			for dir := range target.TargetDirs {
-				fmt.Println(strongWarningStyle.Render(fmt.Sprintf("Deleting %s", dir)))
-				if !flagDry {
-					os.RemoveAll(dir)
-				}
+// TODO: Replace readline with stdio
+func handleTarget(target MatchInfo) error {
+	// Currently this can never fail
+	rl, err := readline.New(destructiveQuestion.Render("Do you want to delete these directories? [y/N] "))
+	if err != nil {
+		return err
+	}
+
+	defer rl.Close()
+
+	fmt.Println(messageStyle.Render(fmt.Sprintf("Found a %s project with the following directories:", langtyle.Render(target.ProgrammingLanguage))))
+
+	for dir, size := range target.TargetDirs {
+		fmt.Println(dirListStyle.Render(fmt.Sprintf("- %s, %.3f MiB", dir, size)))
+	}
+
+	line, err := rl.Readline()
+	if err != nil {
+		return err
+	}
+
+	result := strings.ToUpper(line)
+	result = strings.TrimSpace(result)
+	if result == "Y" {
+		for dir := range target.TargetDirs {
+			fmt.Println(strongWarningStyle.Render(fmt.Sprintf("Deleting %s", dir)))
+			if !flagDry {
+				os.RemoveAll(dir)
 			}
 		}
-		fmt.Println()
-
 	}
+
+	fmt.Println()
+	return nil
 }
 
 func handleRootPath(rootPath string) (string, error) {
 	if rootPath == "" {
-		return "", errors.New("Root path can not be empty")
+		return "", errors.New("root path can not be empty")
 	}
 
 	rootPath = filepath.Clean(rootPath)
