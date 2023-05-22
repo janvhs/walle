@@ -3,19 +3,20 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Identifier interface {
 	Matches(potentialPath string) bool
-	MatchesOptimistically(basePath string) bool
+	MatchesOptimistically(potentialRoot string) bool
 }
 
-type FileExtensionInDirectoryIdentifier struct {
-	Directory string
+type FileExtensionIdentifier struct {
 	Extension string
+	Directory string
 }
 
-func (i *FileExtensionInDirectoryIdentifier) Matches(potentialPath string) bool {
+func (i *FileExtensionIdentifier) Matches(potentialPath string) bool {
 	potentialPath = filepath.Clean(potentialPath)
 	stat, err := os.Stat(potentialPath)
 	if err != nil {
@@ -40,50 +41,38 @@ func (i *FileExtensionInDirectoryIdentifier) Matches(potentialPath string) bool 
 	return false
 }
 
-func (i *FileExtensionInDirectoryIdentifier) MatchesOptimistically(potentialRoot string) bool {
+func (i *FileExtensionIdentifier) MatchesOptimistically(potentialRoot string) bool {
 	potentialPath := filepath.Join(potentialRoot, i.Directory)
 	return i.Matches(potentialPath)
 }
 
-type FileNameInDirectoryIdentifier struct {
-	Directory string
-	Name      string
-}
-
-func (i *FileNameInDirectoryIdentifier) Matches(potentialPath string) bool {
-	potentialPath = filepath.Clean(potentialPath)
-	dirName := filepath.Dir(potentialPath)
-	fileName := filepath.Base(potentialPath)
-
-	stat, err := os.Stat(potentialPath)
-	if err != nil {
-		return false
-	}
-
-	return !stat.IsDir() && dirName == i.Directory && fileName == i.Name
-}
-
-func (i *FileNameInDirectoryIdentifier) MatchesOptimistically(potentialRoot string) bool {
-	potentialPath := filepath.Join(potentialRoot, i.Directory, i.Name)
-	return i.Matches(potentialPath)
-}
-
 type FileNameIdentifier struct {
-	Name string
+	Name      string
+	Directory string
 }
 
 func (i *FileNameIdentifier) Matches(potentialPath string) bool {
 	potentialPath = filepath.Clean(potentialPath)
+	dirPath := filepath.Dir(potentialPath)
 	fileName := filepath.Base(potentialPath)
+
 	stat, err := os.Stat(potentialPath)
 	if err != nil {
 		return false
 	}
 
-	return !stat.IsDir() && i.Name == fileName
+	// Checking a suffix on a cleaned path can match dir1/dirN/file
+	dirMatches := strings.HasSuffix(dirPath, filepath.Clean(i.Directory))
+
+	// If no dir is provided, it always matches
+	if i.Directory == "" {
+		dirMatches = true
+	}
+
+	return !stat.IsDir() && dirMatches && i.Name == fileName
 }
 
 func (i *FileNameIdentifier) MatchesOptimistically(potentialRoot string) bool {
-	potentialPath := filepath.Join(potentialRoot, i.Name)
+	potentialPath := filepath.Join(potentialRoot, i.Directory, i.Name)
 	return i.Matches(potentialPath)
 }

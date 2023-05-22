@@ -127,7 +127,7 @@ func main() {
 			Name: "Python",
 			Configurations: []Configuration{
 				{
-					Identifier: &FileExtensionInDirectoryIdentifier{
+					Identifier: &FileExtensionIdentifier{
 						Directory: "__pycache__",
 						Extension: ".pyc",
 					},
