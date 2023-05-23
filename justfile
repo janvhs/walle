@@ -1,7 +1,7 @@
 export CGO_ENABLED := "0"
 
 build:
-    go build .
+    go build -ldflags="-s -w" .
 
 env:
     go env
