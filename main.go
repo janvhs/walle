@@ -77,6 +77,9 @@ func main() {
 		errorUsage(err)
 	}
 
+	// TODO: When rootPath is not a subpath of the user's homedir or equals the homedir, print an error and ask for force flag
+	// isUnderHome, err := pathIsSubpathOfHomedir(flagRootPath)
+
 	// TODO: Extract this to a serialisable format and embed it with embed.FS
 	projects := []Project{
 		{
@@ -221,8 +224,24 @@ func handleTarget(target MatchInfo) error {
 	return nil
 }
 
+// TODO: This can potentially fail on symlinked home?
+func pathIsSubpathOfHomedir(pathToDirent string) (bool, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return false, err
+	}
+
+	homeDir = filepath.Clean(homeDir)
+	pathToDirent = filepath.Clean(pathToDirent)
+
+	if strings.HasPrefix(pathToDirent, homeDir) && pathToDirent != homeDir {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func handleRootPath(rootPath string) (string, error) {
-	// TODO: When rootPath is not a subpath of the user's homedir or equals the homedir, print an error and ask for force flag
 	var err error
 	var resolvedPath string
 	if rootPath == "" {
