@@ -2,11 +2,9 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,8 +13,6 @@ import (
 	"github.com/chzyer/readline"
 )
 
-// TODO: Replace this with argv[1] and make a help text.
-var flagRootPath string
 var flagDry bool
 
 // TODO: Extract styles to file like charm does it
@@ -45,7 +41,6 @@ var strongWarningStyle = lipgloss.NewStyle().
 var errorStyle = strongWarningStyle
 
 func init() {
-	flag.StringVar(&flagRootPath, "root", "", "The root where to search from")
 	flag.BoolVar(&flagDry, "dry", false, "Run without making changes")
 }
 
@@ -54,18 +49,32 @@ type MatchInfo struct {
 	TargetDirs          map[string]float64
 }
 
+// Custom usage output
+// TODO: Add version
+func usage() {
+	description := "Keep your computer tidy with this little helper 🤖"
+	fmt.Fprintf(flag.CommandLine.Output(), "%s\n\nUsage:\n  %s [path]\n\nFlags:\n", description, os.Args[0])
+
+	flag.PrintDefaults()
+}
+
+func errorUsage(err error) {
+	flag.Usage()
+	fmt.Fprintf(flag.CommandLine.Output(), "Error:\n  %s\n", errorStyle.Render(fmt.Sprint(err)))
+	os.Exit(2)
+}
+
 func main() {
-	// TODO: Add an usage
 	// TODO: Add a version
-	// TODO: Add an app name
+	flag.Usage = usage
 	flag.Parse()
+	flag.CommandLine.Args()
 
 	var err error
-	flagRootPath, err = handleRootPath(flagRootPath)
+	flagRootPath, err := handleRootPath(flag.Arg(0))
 
 	if err != nil {
-		// TODO: Replace every log.Fatal with fmt.Print and os.Exit
-		log.Fatalln(errorStyle.Render(err.Error()))
+		errorUsage(err)
 	}
 
 	// TODO: Extract this to a serialisable format and embed it with embed.FS
@@ -214,21 +223,23 @@ func handleTarget(target MatchInfo) error {
 
 func handleRootPath(rootPath string) (string, error) {
 	// TODO: When rootPath is not a subpath of the user's homedir or equals the homedir, print an error and ask for force flag
-
-	// TODO: If empty, assume $PWD/cwd
+	var err error
+	var resolvedPath string
 	if rootPath == "" {
-		return "", errors.New("root path can not be empty")
+		resolvedPath, err = os.Getwd()
+		if err != nil {
+			return resolvedPath, err
+		}
 	}
 
-	rootPath = filepath.Clean(rootPath)
-	var err error
-	rootPath, err = filepath.Abs(rootPath)
+	resolvedPath = filepath.Clean(resolvedPath)
+	resolvedPath, err = filepath.Abs(resolvedPath)
 
 	if err != nil {
-		return "", err
+		return resolvedPath, err
 	}
 
-	return rootPath, nil
+	return resolvedPath, nil
 }
 
 func scanDirs(rootPath string, projects []Project, targetChannel chan MatchInfo) {

@@ -3,7 +3,7 @@
 Keep your computer tidy with this little helper 🤖
 
 ```sh
-walle -root ~/Projects
+walle ~/Projects
 ```
 
 ## What can *walle* do for me?
@@ -54,24 +54,23 @@ in [main.go](main.go)
 instead of opening an issue.
 
 - JavaScript
-    - npm
+  - npm
 - Python
-    - Virtual environments aka venv
-    - \_\_pycache\_\_
+  - Virtual environments aka venv
+  - \_\_pycache\_\_
 - Rust
-    - Cargo
+  - Cargo
 - php
-    - Composer
+  - Composer
 - Swift
-    - Swift Package Manager
+  - Swift Package Manager
 
 ## TODOs
 
-For a list of open TODOs, please take  a look at the issue tracker ✌️
+For a list of open TODOs, please take  a look at the `// TODO:` comments in the source ✌️
 
 Please contribute, if you have any ideas for cool features or
 just want to improve something.
-
 
 ## One more thing
 
