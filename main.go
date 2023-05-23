@@ -1,3 +1,4 @@
+// TODO: Add comments where they are useful
 package main
 
 import (
@@ -14,9 +15,11 @@ import (
 	"github.com/chzyer/readline"
 )
 
+// TODO: Replace this with argv[1] and make a help text.
 var flagRootPath string
 var flagDry bool
 
+// TODO: Extract styles to file like charm does it
 var messageStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color(""))
 
@@ -52,16 +55,20 @@ type MatchInfo struct {
 }
 
 func main() {
+	// TODO: Add an usage
+	// TODO: Add a version
+	// TODO: Add an app name
 	flag.Parse()
 
-	// TODO: When flagRootPath is not a subpath of the user's homedir or equals the homedir, print a warning
 	var err error
 	flagRootPath, err = handleRootPath(flagRootPath)
 
 	if err != nil {
+		// TODO: Replace every log.Fatal with fmt.Print and os.Exit
 		log.Fatalln(errorStyle.Render(err.Error()))
 	}
 
+	// TODO: Extract this to a serialisable format and embed it with embed.FS
 	projects := []Project{
 		{
 			Name: "JavaScript",
@@ -128,6 +135,7 @@ func main() {
 			Configurations: []Configuration{
 				{
 					Identifier: &FileExtensionIdentifier{
+						// TODO: It is kind of annoying that __pycache__ comes up in every subdirectory. Maybe check if the parent dir already contains a pycache and include it into the same list? Idk I don't use python so I will not implement it.
 						Directory: "__pycache__",
 						Extension: ".pyc",
 					},
@@ -137,6 +145,7 @@ func main() {
 					Identifier: &FileNameIdentifier{
 						Name: "pyvenv.cfg",
 					},
+					// if no directory is provided,
 					// "" is the directory where the file was found in
 					RelativeTargets: []string{""},
 				},
@@ -149,6 +158,7 @@ func main() {
 
 	fmt.Println(scanningStyle.Render("Scanning..."))
 
+	// TODO: Change the UI to a bubbletea UI
 	for target := range targetChan {
 		lipgloss.DefaultRenderer().Output().ClearLines(1)
 		err := handleTarget(target)
@@ -164,6 +174,8 @@ func main() {
 		fmt.Println(scanningStyle.Render("Scanning..."))
 	}
 	lipgloss.DefaultRenderer().Output().ClearLines(1)
+
+	// TODO: After everything is done, print the total size, that is cleaned
 }
 
 // TODO: Replace readline with stdio
@@ -201,6 +213,9 @@ func handleTarget(target MatchInfo) error {
 }
 
 func handleRootPath(rootPath string) (string, error) {
+	// TODO: When rootPath is not a subpath of the user's homedir or equals the homedir, print an error and ask for force flag
+
+	// TODO: If empty, assume $PWD/cwd
 	if rootPath == "" {
 		return "", errors.New("root path can not be empty")
 	}
