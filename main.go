@@ -54,7 +54,7 @@ func errorUsage(err error) {
 }
 
 func displayVersion() {
-	fmt.Printf("%s: %s", os.Args[0], langStyle.Render(Version))
+	fmt.Printf("%s: %s\n", os.Args[0], langStyle.Render(Version))
 	os.Exit(0)
 }
 

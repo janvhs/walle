@@ -3,6 +3,9 @@ export CGO_ENABLED := "0"
 build:
     go build -ldflags="-s -w" .
 
+build-version VERSION:
+    go build -ldflags="-s -w -X main.Version="{{ VERSION }}"" .
+
 env:
     go env
 
