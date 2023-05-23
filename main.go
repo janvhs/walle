@@ -262,7 +262,7 @@ func pathIsSubpathOfHomedir(pathToDirent string) (bool, error) {
 
 func handleRootPath(rootPath string) (string, error) {
 	var err error
-	var resolvedPath string
+	resolvedPath := rootPath
 	if rootPath == "" {
 		resolvedPath, err = os.Getwd()
 		if err != nil {
