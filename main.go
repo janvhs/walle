@@ -1,4 +1,5 @@
 // TODO: Add comments where they are useful
+// TODO: Add skiplist
 package main
 
 import (
