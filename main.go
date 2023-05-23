@@ -7,41 +7,31 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/chzyer/readline"
 )
 
 var flagDry bool
+var flagVersion bool
 
-// TODO: Extract styles to file like charm does it
-var messageStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.Color(""))
+var Version string
 
-var scanningStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.Color("8"))
-
-var langStyle = lipgloss.NewStyle().
-	Bold(true).
-	Foreground(lipgloss.Color("2"))
-
-var dirListStyle = lipgloss.NewStyle().
-	PaddingLeft(2).
-	Foreground(lipgloss.Color("6"))
-
-var destructiveQuestion = lipgloss.NewStyle().
-	Bold(true).
-	Foreground(lipgloss.Color("5"))
-
-var strongWarningStyle = lipgloss.NewStyle().
-	Bold(true).
-	Foreground(lipgloss.Color("1"))
-
-var errorStyle = strongWarningStyle
+func extractVersion() {
+	if Version == "" {
+		if info, ok := debug.ReadBuildInfo(); ok && info.Main.Sum != "" {
+			Version = info.Main.Version
+		} else {
+			Version = "unknown (built from source)"
+		}
+	}
+}
 
 func init() {
+	extractVersion()
 	flag.BoolVar(&flagDry, "dry", false, "Run without making changes")
+	flag.BoolVar(&flagVersion, "v", false, "Display the version")
 }
 
 type MatchInfo struct {
@@ -50,7 +40,6 @@ type MatchInfo struct {
 }
 
 // Custom usage output
-// TODO: Add version
 func usage() {
 	description := "Keep your computer tidy with this little helper 🤖"
 	fmt.Fprintf(flag.CommandLine.Output(), "%s\n\nUsage:\n  %s [path]\n\nFlags:\n", description, os.Args[0])
@@ -64,11 +53,19 @@ func errorUsage(err error) {
 	os.Exit(2)
 }
 
+func displayVersion() {
+	fmt.Printf("%s: %s", os.Args[0], langStyle.Render(Version))
+	os.Exit(0)
+}
+
 func main() {
-	// TODO: Add a version
 	flag.Usage = usage
 	flag.Parse()
 	flag.CommandLine.Args()
+
+	if flagVersion {
+		displayVersion()
+	}
 
 	var err error
 	flagRootPath, err := handleRootPath(flag.Arg(0))
@@ -172,7 +169,7 @@ func main() {
 
 	// TODO: Change the UI to a bubbletea UI
 	for target := range targetChan {
-		lipgloss.DefaultRenderer().Output().ClearLines(1)
+		clearLine()
 		err := handleTarget(target)
 		if err != nil {
 			if err == readline.ErrInterrupt {
@@ -185,7 +182,7 @@ func main() {
 		fmt.Println()
 		fmt.Println(scanningStyle.Render("Scanning..."))
 	}
-	lipgloss.DefaultRenderer().Output().ClearLines(1)
+	clearLine()
 
 	// TODO: After everything is done, print the total size, that is cleaned
 }
