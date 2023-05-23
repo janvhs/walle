@@ -2,7 +2,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io/fs"
 	"os"
@@ -11,10 +10,12 @@ import (
 	"strings"
 
 	"github.com/chzyer/readline"
+	flag "github.com/spf13/pflag"
 )
 
 var flagDry bool
 var flagVersion bool
+var flagHelp bool
 
 var Version string
 
@@ -31,7 +32,8 @@ func extractVersion() {
 func init() {
 	extractVersion()
 	flag.BoolVar(&flagDry, "dry", false, "Run without making changes")
-	flag.BoolVar(&flagVersion, "v", false, "Display the version")
+	flag.BoolVarP(&flagVersion, "version", "v", false, "Display the version")
+	flag.BoolVarP(&flagHelp, "help", "h", false, "Display this message")
 }
 
 type MatchInfo struct {
@@ -42,19 +44,19 @@ type MatchInfo struct {
 // Custom usage output
 func usage() {
 	description := "Keep your computer tidy with this little helper 🤖"
-	fmt.Fprintf(flag.CommandLine.Output(), "%s\n\nUsage:\n  %s [path]\n\nFlags:\n", description, os.Args[0])
+	fmt.Fprintf(os.Stderr, "%s\n\nUsage:\n  %s [path]\n\nFlags:\n", description, os.Args[0])
 
 	flag.PrintDefaults()
 }
 
 func errorUsage(err error) {
 	flag.Usage()
-	fmt.Fprintf(flag.CommandLine.Output(), "Error:\n  %s\n", errorStyle.Render(fmt.Sprint(err)))
+	fmt.Fprintf(os.Stderr, "Error:\n  %s\n", errorStyle.Render(fmt.Sprint(err)))
 	os.Exit(2)
 }
 
 func displayVersion() {
-	fmt.Printf("%s: %s", os.Args[0], langStyle.Render(Version))
+	fmt.Printf("%s: %s\n", os.Args[0], langStyle.Render(Version))
 	os.Exit(0)
 }
 
@@ -62,6 +64,11 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 	flag.CommandLine.Args()
+
+	if flagHelp {
+		flag.Usage()
+		os.Exit(2)
+	}
 
 	if flagVersion {
 		displayVersion()
@@ -167,32 +174,45 @@ func main() {
 
 	fmt.Println(scanningStyle.Render("Scanning..."))
 
+	var totalCleaned float64
+	var interrupted bool
+
 	// TODO: Change the UI to a bubbletea UI
 	for target := range targetChan {
 		clearLine()
-		err := handleTarget(target)
+		size, err := handleTarget(target)
 		if err != nil {
 			if err == readline.ErrInterrupt {
+				interrupted = true
 				break
 			} else {
 				continue
 			}
 		}
 
+		totalCleaned += size
+
 		fmt.Println()
 		fmt.Println(scanningStyle.Render("Scanning..."))
 	}
 	clearLine()
 
-	// TODO: After everything is done, print the total size, that is cleaned
+	newLineOnInterrupt := ""
+	if interrupted {
+		newLineOnInterrupt = "\n"
+	}
+
+	fmt.Printf("%sTotal size cleaned: %s\n", newLineOnInterrupt, langStyle.Render(fmt.Sprintf("%.3f MiB", totalCleaned)))
 }
 
 // TODO: Replace readline with stdio
-func handleTarget(target MatchInfo) error {
+func handleTarget(target MatchInfo) (float64, error) {
 	// Currently this can never fail
+	var sizeCleaned float64
+	var sizeAccumulated float64
 	rl, err := readline.New(destructiveQuestion.Render("Do you want to delete these directories? [y/N] "))
 	if err != nil {
-		return err
+		return sizeCleaned, err
 	}
 
 	defer rl.Close()
@@ -200,17 +220,19 @@ func handleTarget(target MatchInfo) error {
 	fmt.Println(messageStyle.Render(fmt.Sprintf("Found a %s project with the following directories:", langStyle.Render(target.ProgrammingLanguage))))
 
 	for dir, size := range target.TargetDirs {
+		sizeAccumulated += size
 		fmt.Println(dirListStyle.Render(fmt.Sprintf("- %s, %.3f MiB", dir, size)))
 	}
 
 	line, err := rl.Readline()
 	if err != nil {
-		return err
+		return sizeCleaned, err
 	}
 
 	result := strings.ToUpper(line)
 	result = strings.TrimSpace(result)
 	if result == "Y" {
+		sizeCleaned = sizeAccumulated
 		for dir := range target.TargetDirs {
 			fmt.Println(strongWarningStyle.Render(fmt.Sprintf("Deleting %s", dir)))
 			if !flagDry {
@@ -218,7 +240,7 @@ func handleTarget(target MatchInfo) error {
 			}
 		}
 	}
-	return nil
+	return sizeCleaned, nil
 }
 
 // TODO: This can potentially fail on symlinked home?
