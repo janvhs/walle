@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/chzyer/readline v1.5.1
+	github.com/spf13/pflag v1.0.5
 )
 
 require (

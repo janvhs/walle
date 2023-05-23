@@ -2,7 +2,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io/fs"
 	"os"
@@ -11,10 +10,12 @@ import (
 	"strings"
 
 	"github.com/chzyer/readline"
+	flag "github.com/spf13/pflag"
 )
 
 var flagDry bool
 var flagVersion bool
+var flagHelp bool
 
 var Version string
 
@@ -31,7 +32,8 @@ func extractVersion() {
 func init() {
 	extractVersion()
 	flag.BoolVar(&flagDry, "dry", false, "Run without making changes")
-	flag.BoolVar(&flagVersion, "v", false, "Display the version")
+	flag.BoolVarP(&flagVersion, "version", "v", false, "Display the version")
+	flag.BoolVarP(&flagHelp, "help", "h", false, "Display this message")
 }
 
 type MatchInfo struct {
@@ -42,14 +44,14 @@ type MatchInfo struct {
 // Custom usage output
 func usage() {
 	description := "Keep your computer tidy with this little helper 🤖"
-	fmt.Fprintf(flag.CommandLine.Output(), "%s\n\nUsage:\n  %s [path]\n\nFlags:\n", description, os.Args[0])
+	fmt.Fprintf(os.Stderr, "%s\n\nUsage:\n  %s [path]\n\nFlags:\n", description, os.Args[0])
 
 	flag.PrintDefaults()
 }
 
 func errorUsage(err error) {
 	flag.Usage()
-	fmt.Fprintf(flag.CommandLine.Output(), "Error:\n  %s\n", errorStyle.Render(fmt.Sprint(err)))
+	fmt.Fprintf(os.Stderr, "Error:\n  %s\n", errorStyle.Render(fmt.Sprint(err)))
 	os.Exit(2)
 }
 
@@ -62,6 +64,11 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 	flag.CommandLine.Args()
+
+	if flagHelp {
+		flag.Usage()
+		os.Exit(2)
+	}
 
 	if flagVersion {
 		displayVersion()
