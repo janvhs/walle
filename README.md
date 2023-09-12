@@ -74,18 +74,7 @@ just want to improve something.
 
 ## One more thing
 
-Software is more than just bits and bytes. It should be elegant,
-easy to read, correct, maintainable and working on it
-should teach you something.
+This software is **100%** handmade.
 
-One can only truly fulfil this goal, if one truly thinks about,
-understands and knows about the source code one writes.
-
-In my opinion, this is only possible by writing the source code
-yourself, paraphrasing source code from external sources or,
-to some extent, generating source code via a compiler.
-
-Therefore, this software is **100%** handmade.
-
-Built with 🫶 and 💅 by [Jan Fooken](https://github.com/bode-fun).
+Built with 🫶 and 💅 by [Jan Fooken](https://bode-fun).
 Licensed under [GPLv3](LICENSE)
